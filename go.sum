@@ -1,6 +1,2 @@
-github.com/jacksonCLyu/ridi-faces v0.0.0-20220421020545-d5e76125fb5e h1:Z8MOmFEr5Ox7+DGjND/6EqFhd2AMy8+aT3WirnuXD5E=
-github.com/jacksonCLyu/ridi-faces v0.0.0-20220421020545-d5e76125fb5e/go.mod h1:JEO+0FKa+9EBEcRJ1tfctyAn2wkUrlph/kI6yx4/XRE=
-github.com/jacksonCLyu/ridi-faces v0.0.0-20220421033143-2e4f091d2bb2 h1:ghPJ0cERQTr4FGrEtodL8rxPaohavhUK/BqOeFPZl+g=
-github.com/jacksonCLyu/ridi-faces v0.0.0-20220421033143-2e4f091d2bb2/go.mod h1:JEO+0FKa+9EBEcRJ1tfctyAn2wkUrlph/kI6yx4/XRE=
-github.com/jacksonCLyu/ridi-faces v0.0.0-20220421034059-8def9edc3bf2 h1:j/v6lBzpe7zXxHzaVt2ozHVj/uVKkesRqbY7M6kjcsM=
-github.com/jacksonCLyu/ridi-faces v0.0.0-20220421034059-8def9edc3bf2/go.mod h1:JEO+0FKa+9EBEcRJ1tfctyAn2wkUrlph/kI6yx4/XRE=
+golang.org/x/text v0.3.7 h1:olpwvP2KacW1ZWvsR7uQhoyTYvKAupfQrRGBFM352Gk=
+golang.org/x/text v0.3.7/go.mod h1:u+2+/6zg+i71rQMx5EYifcz6MCKuco9NR6JIITiCfzQ=
