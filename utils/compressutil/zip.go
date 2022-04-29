@@ -3,6 +3,7 @@ package compressutil
 import (
 	"archive/zip"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,74 +19,96 @@ import (
 	"github.com/jacksonCLyu/ridi-utils/utils/rescueutil"
 )
 
-func Zip(dst, src string) (err error) {
+// Zip zip src directory to zipFilePath file
+func Zip(zipFilePath string, srcDirPath string) (err error) {
 	defer rescueutil.Recover(func(e any) {
-		err = fmt.Errorf("%v", e)
+		if underlineErr, ok := e.(error); ok {
+			err = underlineErr
+		} else {
+			err = errors.New(fmt.Sprintf("%v", e))
+		}
 	})
-	// 创建准备写入的文件
-	fw := assignutil.Assign(os.Create(dst))
-	defer fw.Close()
+	// if zipFile exists, remove it.
+	errcheck.CheckAndPanic(os.RemoveAll(zipFilePath))
 
-	// 通过 fw 来创建 zip.Write
-	zw := zip.NewWriter(fw)
-	// 检测一下是否成功关闭
-	defer errcheck.CheckAndPanic(zw.Close())
+	// create a new file for zip
+	zipFile := assignutil.Assign(os.Create(zipFilePath))
+	defer func() {
+		errcheck.CheckAndPanic(zipFile.Close())
+	}()
 
-	// 下面来将文件写入 zw ，因为有可能会有很多个目录及文件，所以递归处理
-	errcheck.CheckAndPanic(filepath.Walk(src, func(path string, fi os.FileInfo, errBack error) (err error) {
+	// create a new zip writer by the file
+	zw := zip.NewWriter(zipFile)
+	defer func() {
+		errcheck.CheckAndPanic(zw.Close())
+	}()
+
+	// walk dir and write zip file
+	return filepath.Walk(srcDirPath, func(path string, fi os.FileInfo, errBack error) (err error) {
 		defer rescueutil.Recover(func(e any) {
-			err = fmt.Errorf("%v", e)
+			if underlineErr, ok := e.(error); ok {
+				err = underlineErr
+			} else {
+				err = errors.New(fmt.Sprintf("%v", e))
+			}
 		})
-		if errBack != nil {
-			return errBack
+
+		errcheck.CheckAndPanic(errBack)
+
+		if path == srcDirPath {
+			return
 		}
 
-		// 通过文件信息，创建 zip 的文件信息
+		// create zip header
 		fh := assignutil.Assign(zip.FileInfoHeader(fi))
+		// trim prefix
+		fh.Name = strings.TrimPrefix(path, srcDirPath+string(filepath.Separator))
 
-		// 替换文件信息中的文件名
-		fh.Name = strings.TrimPrefix(path, string(filepath.Separator))
-
-		// 这步开始没有加，会发现解压的时候说它不是个目录
+		// if dir add filepath.Separator
 		if fi.IsDir() {
 			fh.Name += "/"
+		} else {
+			fh.Method = zip.Deflate
 		}
 
-		// 写入文件信息，并返回一个 Write 结构
+		// create zip writer
 		w := assignutil.Assign(zw.CreateHeader(fh))
 
-		// 检测，如果不是标准文件就只写入头信息，不写入文件数据到 w
-		// 如目录，也没有数据需要写
+		// if not standard file like: directory, just return
 		if !fh.Mode().IsRegular() {
-			return nil
+			return
 		}
 
-		// 打开要压缩的文件
+		// open file
 		fr := assignutil.Assign(os.Open(path))
 		defer fr.Close()
 
-		// 将打开的文件 Copy 到 w
+		// Copy file to zip writer
 		n := assignutil.Assign(io.Copy(w, fr))
 
-		// 输出压缩的内容
+		// print file name and size
 		fmt.Printf("成功压缩文件： %s, 共写入了 %d 个字符的数据\n", path, n)
 		return
-	}))
-	return
+	})
 }
 
-func UnZip(dst, src string) (err error) {
+// UnZip 解压缩，将 src 文件解压缩到 dst 目录中，如果 dst 不存在，则创建。默认传空则 dst 为当前目录
+func UnZip(unzipDirPath string, zipFilePath string) (err error) {
 	defer rescueutil.Recover(func(e any) {
 		err = fmt.Errorf("%v", e)
 	})
+
+	// if unzipDirPath exists, remove it.
+	errcheck.CheckAndPanic(os.RemoveAll(unzipDirPath))
+
 	// 打开压缩文件，这个 zip 包有个方便的 ReadCloser 类型
 	// 这个里面有个方便的 OpenReader 函数，可以比 tar 的时候省去一个打开文件的步骤
-	zr := assignutil.Assign(zip.OpenReader(src))
+	zr := assignutil.Assign(zip.OpenReader(zipFilePath))
 	defer zr.Close()
 
 	// 如果解压后不是放在当前目录就按照保存目录去创建目录
-	if dst != "" {
-		errcheck.CheckAndPanic(os.MkdirAll(dst, 0755))
+	if unzipDirPath != "" {
+		errcheck.CheckAndPanic(os.MkdirAll(unzipDirPath, 0755))
 	}
 
 	// 遍历 zr ，将文件写入到磁盘
@@ -101,7 +124,7 @@ func UnZip(dst, src string) (err error) {
 		} else {
 			decodeName = string(content)
 		}
-		path := filepath.Join(dst, decodeName)
+		path := filepath.Join(unzipDirPath, decodeName)
 
 		// 如果是目录，就创建目录
 		if file.FileInfo().IsDir() {
@@ -116,9 +139,6 @@ func UnZip(dst, src string) (err error) {
 }
 
 func doUnzipCopy(file *zip.File, path string) {
-	defer rescueutil.Recover(func(err any) {
-		fmt.Printf("%v", err)
-	})
 	// 获取到 Reader
 	fr := assignutil.Assign(file.Open())
 	defer fr.Close()
