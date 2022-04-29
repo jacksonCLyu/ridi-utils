@@ -91,7 +91,9 @@ func Gunzip(data []byte) (out []byte, e error) {
 	defer putBytesBuf(buf)
 	buf.Write(data)
 	r := assignutil.Assign(gzip.NewReader(buf))
-	defer errcheck.CheckAndPanic(r.Close())
+	defer func() {
+		errcheck.CheckAndPanic(r.Close())
+	}()
 	out = assignutil.Assign(ioutil.ReadAll(r))
 	return
 }
@@ -106,7 +108,9 @@ func GunzipString(data string) (out string, e error) {
 	defer putBytesBuf(buf)
 	buf.Write(convutil.Str2bytes(data))
 	r := assignutil.Assign(gzip.NewReader(buf))
-	defer errcheck.CheckAndPanic(r.Close())
+	defer func() {
+		errcheck.CheckAndPanic(r.Close())
+	}()
 	out = convutil.Bytes2str(assignutil.Assign(ioutil.ReadAll(r)))
 	return
 }
@@ -141,7 +145,9 @@ func GunzipWithBase64(data string) (out string, e error) {
 	b := assignutil.Assign(base64util.DecodeString(data))
 	buf.Write(b)
 	r := assignutil.Assign(gzip.NewReader(buf))
-	defer errcheck.CheckAndPanic(r.Close())
+	defer func() {
+		errcheck.CheckAndPanic(r.Close())
+	}()
 	out = convutil.Bytes2str(assignutil.Assign(ioutil.ReadAll(r)))
 	return
 }

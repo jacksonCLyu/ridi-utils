@@ -6,6 +6,12 @@ import (
 )
 
 // CheckAndPanic check error and panic if error is not nil
+// especially for the function which is called in defer statement.
+// For example:
+// 	defer func() {
+// 		errcheck.CheckAndPanic(fileWriter.Close())
+// 	}()
+// 	do something...
 func CheckAndPanic(err error) {
 	if err != nil {
 		panic(err)
