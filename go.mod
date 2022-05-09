@@ -2,4 +2,6 @@ module github.com/jacksonCLyu/ridi-utils
 
 go 1.18
 
-require golang.org/x/text v0.3.7
+require (
+	golang.org/x/text v0.3.7
+)
