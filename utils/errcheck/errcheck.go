@@ -3,6 +3,8 @@ package errcheck
 import (
 	"fmt"
 	"os"
+
+	"github.com/pkg/errors"
 )
 
 // CheckAndPanic check error and panic if error is not nil
@@ -14,14 +16,14 @@ import (
 // 	do something...
 func CheckAndPanic(err error) {
 	if err != nil {
-		panic(err)
+		panic(errors.WithStack(err))
 	}
 }
 
 // CheckAndExit check error and exit if error is not nil
 func CheckAndExit(err error) {
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(errors.WithStack(err))
 		os.Exit(1)
 	}
 }
